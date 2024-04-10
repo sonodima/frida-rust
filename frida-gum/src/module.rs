@@ -122,6 +122,32 @@ impl Module {
         }
     }
 
+    /// Returns the details of this process' main module.
+    pub fn main_module() -> ModuleDetailsOwned {
+        let (name, path, base_address, size) = unsafe {
+            let details = gum_sys::gum_process_get_main_module();
+
+            let name: String = NativePointer((*details).name as *mut _)
+                .try_into()
+                .unwrap_or_default();
+            let path: String = NativePointer((*details).path as *mut _)
+                .try_into()
+                .unwrap_or_default();
+            let range = (*details).range;
+            let base_address = (*range).base_address as usize;
+            let size = (*range).size as usize;
+
+            (name, path, base_address, size)
+        };
+
+        ModuleDetailsOwned {
+            name,
+            path,
+            base_address,
+            size,
+        }
+    }
+
     /// Enumerates memory ranges satisfying protection given.
     pub fn enumerate_ranges(
         module_name: &str,
